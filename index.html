@@ -87,6 +87,12 @@
         button:hover {
             background-color: #45a049;
         }
+        .button-limpar {
+            background-color: #708090; /* Cinza para o botão de limpar */
+        }
+        .button-limpar:hover {
+            background-color: #5a6878;
+        }
         .tab-container {
             display: flex;
             justify-content: center;
@@ -154,8 +160,7 @@
         </div>
         
         <button onclick="salvarHistorico()">Salvar no Histórico</button>
-
-        <div class="result-group">
+        <button onclick="limparCampos()" class="button-limpar">Limpar Campos</button> <div class="result-group">
             <div class="compact-row">
                 <span class="compact-label">Frete GO:</span>
                 <span class="compact-value" id="freteGo"></span>
@@ -207,6 +212,20 @@
             style: 'currency',
             currency: 'BRL'
         }).format(valor);
+    }
+
+    // NOVA FUNÇÃO PARA LIMPAR OS CAMPOS DE ENTRADA E O RESULTADO
+    function limparCampos() {
+        document.getElementById('volume').value = '';
+        document.getElementById('kmTotal').value = '';
+        document.getElementById('kmGo').value = '';
+        document.getElementById('kmMt').value = '';
+        document.getElementById('vlrKmRodado').value = '';
+        document.getElementById('vlrKmRodado').placeholder = 'Negociar valor'; // Restaura o placeholder
+
+        // Limpa também os campos de resultado
+        const resultados = ['freteGo', 'freteMt', 'baseIcmsGo', 'baseIcmsMt', 'icmsGo', 'icmsMt', 'freteBruto'];
+        resultados.forEach(id => document.getElementById(id).textContent = '');
     }
 
     // Funções de cálculo
@@ -346,12 +365,15 @@
     
     // Chamada inicial para preencher os valores e carregar o histórico
     window.onload = function() {
-        document.getElementById('volume').value = 15000;
-        document.getElementById('kmTotal').value = 1400;
-        document.getElementById('kmGo').value = 800;
-        ajustarVlrKmRodado();
-        calcularKmMT();
-        calcularFrete();
+        // Remove a inicialização automática de valores para começar limpo
+        // document.getElementById('volume').value = 15000;
+        // document.getElementById('kmTotal').value = 1400;
+        // document.getElementById('kmGo').value = 800;
+        // ajustarVlrKmRodado();
+        // calcularKmMT();
+        // calcularFrete();
+        
+        limparCampos(); // Chamada para garantir que inicie vazio
         carregarHistorico();
     };
 </script>
