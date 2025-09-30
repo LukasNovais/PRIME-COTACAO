@@ -1,128 +1,3 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Frete com ICMS</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h2 {
-            text-align: center;
-            color: #4CAF50;
-        }
-        .input-row {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 15px;
-        }
-        .input-group {
-            flex: 1;
-        }
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .input-group input {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .result-group, .history-container {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #e2f5e2;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        /* Estilo para compactar os resultados */
-        .result-group .compact-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-        .result-group .compact-label {
-            flex: 1;
-            text-align: left;
-        }
-        .result-group .compact-value {
-            flex: 1;
-            text-align: right;
-        }
-
-        .history-item {
-            margin: 5px 0;
-            padding: 5px;
-            border-bottom: 1px solid #ccc;
-        }
-        .history-item:last-child {
-            border-bottom: none;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 10px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .button-limpar {
-            background-color: #708090; /* Cinza para o botão de limpar */
-        }
-        .button-limpar:hover {
-            background-color: #5a6878;
-        }
-        .tab-container {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        .tab {
-            flex: 1;
-            text-align: center;
-            padding: 10px;
-            cursor: pointer;
-            background: #ddd;
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
-            border: 1px solid #ccc;
-            border-bottom: none;
-        }
-        .tab.active {
-            background: #fff;
-            border-bottom: 1px solid #fff;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-    </style>
-</head>
-<body>
-
 <div class="container">
     <div class="tab-container">
         <div class="tab active" onclick="showTab('calculator')">Calculadora</div>
@@ -131,18 +6,37 @@
 
     <div id="calculator-content" class="tab-content active">
         <h2>Calculadora de Frete com ICMS</h2>
+
+        <div class="route-group">
+            <div class="input-group">
+                <label for="originLink">Link Google Maps (Origem)</label>
+                <input type="text" id="originLink" placeholder="Ex: https://goo.gl/maps/..." onchange="calcularRotaGoogle()">
+            </div>
+            
+            <div id="waypointContainer">
+                </div>
+            
+            <div class="input-group">
+                <label for="destinationLink">Link Google Maps (Destino Final)</label>
+                <input type="text" id="destinationLink" placeholder="Ex: https://goo.gl/maps/..." onchange="calcularRotaGoogle()">
+            </div>
+            
+            <button onclick="adicionarDestinoAdicional()" style="background-color: #007bff; margin-top: 5px;">Adicionar Outro Destino</button>
+        </div>
         
+        <hr style="margin: 15px 0;">
+
         <div class="input-row">
             <div class="input-group">
-                <label for="volume">Volume</label>
-                <input type="number" id="volume" oninput="ajustarVlrKmRodado()">
+                <label for="kmTotal">KM Total (Rota)</label>
+                <input type="number" id="kmTotal" readonly>
             </div>
             <div class="input-group">
-                <label for="kmTotal">KM Total</label>
-                <input type="number" id="kmTotal" oninput="calcularFrete()">
+                <label for="vlrKmRodado">VLR KM Rodado</label>
+                <input type="number" id="vlrKmRodado" placeholder="Preencha o Volume" step="0.01" oninput="calcularFrete()">
             </div>
         </div>
-    
+        
         <div class="input-row">
             <div class="input-group">
                 <label for="kmGo">KM GO</label>
@@ -155,228 +49,134 @@
         </div>
         
         <div class="input-group">
-            <label for="vlrKmRodado">VLR KM Rodado</label>
-            <input type="number" id="vlrKmRodado" placeholder="Preencha o Volume" step="0.01" oninput="calcularFrete()">
+            <label for="volume">Volume (Sugestão VLR KM)</label>
+            <input type="number" id="volume" oninput="ajustarVlrKmRodado()">
         </div>
         
-        <button onclick="salvarHistorico()">Salvar no Histórico</button>
-        <button onclick="limparCampos()" class="button-limpar">Limpar Campos</button> <div class="result-group">
-            <div class="compact-row">
-                <span class="compact-label">Frete GO:</span>
-                <span class="compact-value" id="freteGo"></span>
-            </div>
-            <div class="compact-row">
-                <span class="compact-label">Frete MT:</span>
-                <span class="compact-value" id="freteMt"></span>
-            </div>
-            <hr>
-            <div class="compact-row">
-                <span class="compact-label">Base ICMS GO:</span>
-                <span class="compact-value" id="baseIcmsGo"></span>
-            </div>
-            <div class="compact-row">
-                <span class="compact-label">Base ICMS MT:</span>
-                <span class="compact-value" id="baseIcmsMt"></span>
-            </div>
-            <hr>
-            <div class="compact-row">
-                <span class="compact-label">ICMS GO:</span>
-                <span class="compact-value" id="icmsGo"></span>
-            </div>
-            <div class="compact-row">
-                <span class="compact-label">ICMS MT:</span>
-                <span class="compact-value" id="icmsMt"></span>
-            </div>
-            <hr>
-            <p style="text-align: right;"><strong>Frete Bruto: <span id="freteBruto"></span></strong></p>
-        </div>
-    </div>
+        ```
 
-    <div id="history-content" class="tab-content">
-        <h2>Histórico de Cálculos</h2>
-        <div id="history-list" class="history-container">
-            <p>Nenhum cálculo salvo ainda.</p>
-        </div>
-        <button onclick="limparHistorico()" style="background-color: #f44336;">Limpar Histórico</button>
-    </div>
-</div>
+### 2. Novo JavaScript para a Rota Dinâmica
 
+O código a seguir adiciona as funções para gerenciar os campos dinâmicos e a função `calcularRotaGoogle()`, que é o **ponto de integração** onde você precisará adicionar a chamada à API do Google Maps.
+
+```javascript
 <script>
-    // Funções de utilidade
-    function arredondarParaCima(valor) {
-        return Math.ceil(valor / 50) * 50;
-    }
+    // **IMPORTANTE: Insira sua Chave de API do Google Maps AQUI**
+    // Você precisa carregar a biblioteca do Google Maps com a sua chave.
+    // Exemplo: <script src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_API&libraries=routes&callback=initMap" async defer></script>
 
-    function formatarMoeda(valor) {
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        }).format(valor);
-    }
+    let waypointCount = 0; // Contador para gerenciar destinos adicionais
 
-    // NOVA FUNÇÃO PARA LIMPAR OS CAMPOS DE ENTRADA E O RESULTADO
-    function limparCampos() {
-        document.getElementById('volume').value = '';
-        document.getElementById('kmTotal').value = '';
-        document.getElementById('kmGo').value = '';
-        document.getElementById('kmMt').value = '';
-        document.getElementById('vlrKmRodado').value = '';
-        document.getElementById('vlrKmRodado').placeholder = 'Negociar valor'; // Restaura o placeholder
-
-        // Limpa também os campos de resultado
-        const resultados = ['freteGo', 'freteMt', 'baseIcmsGo', 'baseIcmsMt', 'icmsGo', 'icmsMt', 'freteBruto'];
-        resultados.forEach(id => document.getElementById(id).textContent = '');
-    }
-
-    // Funções de cálculo
-    function ajustarVlrKmRodado() {
-        const volume = parseFloat(document.getElementById('volume').value);
-        const vlrKmRodadoInput = document.getElementById('vlrKmRodado');
-        if (volume === 15000) {
-            vlrKmRodadoInput.value = 5.00.toFixed(2);
-        } else if (volume === 20000) {
-            vlrKmRodadoInput.value = 5.30.toFixed(2);
-        } else if (volume === 30000) {
-            vlrKmRodadoInput.value = 8.00.toFixed(2);
-        } else {
-            vlrKmRodadoInput.value = ''; 
-            vlrKmRodadoInput.placeholder = 'Negociar valor';
-        }
-        calcularFrete(); 
-    }
-
-    function calcularKmMT() {
-        const kmTotal = parseFloat(document.getElementById('kmTotal').value);
-        const kmGo = parseFloat(document.getElementById('kmGo').value);
-        const kmMtInput = document.getElementById('kmMt');
-        if (!isNaN(kmTotal) && !isNaN(kmGo)) {
-            const kmMt = kmTotal - kmGo;
-            kmMtInput.value = kmMt.toFixed(0);
-        } else {
-            kmMtInput.value = '';
-        }
-    }
-
-    function calcularFrete() {
-        const kmGo = parseFloat(document.getElementById('kmGo').value);
-        const kmMt = parseFloat(document.getElementById('kmMt').value);
-        const vlrKmRodado = parseFloat(document.getElementById('vlrKmRodado').value);
-
-        if (isNaN(vlrKmRodado) || vlrKmRodado <= 0 || isNaN(kmGo) || isNaN(kmMt)) {
-            const resultados = ['freteGo', 'freteMt', 'baseIcmsGo', 'baseIcmsMt', 'icmsGo', 'icmsMt', 'freteBruto'];
-            resultados.forEach(id => document.getElementById(id).textContent = '');
-            return;
-        }
-
-        // Cálculos para GO
-        const freteLiquidoGo = kmGo * vlrKmRodado;
-        const freteBrutoGo = arredondarParaCima(freteLiquidoGo / 0.88);
-        const baseIcmsGo = freteLiquidoGo;
-        const icmsGo = baseIcmsGo * 0.12;
-
-        // Cálculos para MT
-        const freteLiquidoMt = kmMt * vlrKmRodado;
-        const freteBrutoMt = arredondarParaCima(freteLiquidoMt / 0.83);
-        const baseIcmsMt = freteLiquidoMt;
-        const icmsMt = baseIcmsMt * 0.17;
+    // Função para adicionar um novo campo de destino adicional
+    function adicionarDestinoAdicional() {
+        waypointCount++;
+        const container = document.getElementById('waypointContainer');
+        const newDiv = document.createElement('div');
+        newDiv.className = 'input-group';
+        newDiv.id = `waypoint-group-${waypointCount}`;
         
-        // Frete Bruto Total - soma dos valores já arredondados
-        const freteBrutoTotal = freteBrutoGo + freteBrutoMt;
+        newDiv.innerHTML = `
+            <label for="waypointLink${waypointCount}">Link Google Maps (Parada ${waypointCount}) 
+                <button onclick="removerDestinoAdicional(${waypointCount})" style="width: auto; padding: 2px 5px; margin-top: 0; background-color: #f44336;">X</button>
+            </label>
+            <input type="text" id="waypointLink${waypointCount}" placeholder="Ex: https://goo.gl/maps/..." onchange="calcularRotaGoogle()">
+        `;
         
-        document.getElementById('freteGo').textContent = formatarMoeda(freteBrutoGo);
-        document.getElementById('freteMt').textContent = formatarMoeda(freteBrutoMt);
-        document.getElementById('baseIcmsGo').textContent = formatarMoeda(baseIcmsGo);
-        document.getElementById('baseIcmsMt').textContent = formatarMoeda(baseIcmsMt);
-        document.getElementById('icmsGo').textContent = formatarMoeda(icmsGo);
-        document.getElementById('icmsMt').textContent = formatarMoeda(icmsMt);
-        document.getElementById('freteBruto').textContent = formatarMoeda(freteBrutoTotal);
+        // Insere o novo campo antes do destino final
+        container.appendChild(newDiv);
     }
     
-    // Funções de Histórico
-    function salvarHistorico() {
-        const freteBruto = document.getElementById('freteBruto').textContent;
-        const kmTotal = document.getElementById('kmTotal').value;
-        const vlrKmRodado = document.getElementById('vlrKmRodado').value;
-        const kmGo = document.getElementById('kmGo').value;
-        const kmMt = document.getElementById('kmMt').value;
+    // Função para remover um campo de destino adicional
+    function removerDestinoAdicional(id) {
+        document.getElementById(`waypoint-group-${id}`).remove();
+        // Recalcula o total de KM após a remoção
+        calcularRotaGoogle(); 
+    }
 
-        if (freteBruto.trim() === '') {
-            alert('Não há cálculo para salvar no histórico.');
+    // Função PRINCIPAL: Calcula a distância total da rota usando a API do Google Maps
+    async function calcularRotaGoogle() {
+        const origin = document.getElementById('originLink').value.trim();
+        const destination = document.getElementById('destinationLink').value.trim();
+        const kmTotalInput = document.getElementById('kmTotal');
+        
+        if (!origin || !destination) {
+            kmTotalInput.value = '';
+            calcularFrete(); 
             return;
         }
 
-        const historico = JSON.parse(localStorage.getItem('freteHistorico') || '[]');
-        const novoRegistro = {
-            data: new Date().toLocaleString(),
-            kmTotal: kmTotal,
-            kmGo: kmGo,
-            kmMt: kmMt,
-            vlrKmRodado: vlrKmRodado,
-            freteBruto: freteBruto
-        };
-        historico.push(novoRegistro);
-        localStorage.setItem('freteHistorico', JSON.stringify(historico));
-        carregarHistorico();
-    }
-
-    function carregarHistorico() {
-        const historico = JSON.parse(localStorage.getItem('freteHistorico') || '[]');
-        const listaHistorico = document.getElementById('history-list');
-        listaHistorico.innerHTML = '';
-
-        if (historico.length === 0) {
-            listaHistorico.innerHTML = '<p>Nenhum cálculo salvo ainda.</p>';
-        } else {
-            historico.forEach(item => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'history-item';
-                itemDiv.innerHTML = `
-                    <p><strong>Data:</strong> ${item.data}</p>
-                    <p><strong>KM Total:</strong> ${item.kmTotal} | <strong>VLR KM:</strong> ${item.vlrKmRodado}</p>
-                    <p><strong>Frete Bruto:</strong> ${item.freteBruto}</p>
-                `;
-                listaHistorico.appendChild(itemDiv);
+        // 1. Coleta todos os waypoints dinâmicos
+        const waypoints = [];
+        for (let i = 1; i <= waypointCount; i++) {
+            const input = document.getElementById(`waypointLink${i}`);
+            if (input && input.value.trim()) {
+                // O Google Maps API usa Waypoint objects. O campo `location` pode ser uma string.
+                waypoints.push({
+                    location: input.value.trim(),
+                    stopover: true 
+                });
+            }
+        }
+        
+        // 2. Chama a API do Google Maps (AQUI COMEÇA A INTEGRAÇÃO COM A API)
+        
+        // **ESTE É O TRECHO QUE VOCÊ PRECISA COMPLETAR COM A LÓGICA DA API**
+        // A lógica da API deve:
+        // a) Chamar google.maps.DirectionsService().route({...}) com origin, destination e waypoints.
+        // b) Em caso de sucesso (status OK), somar a distância de cada "leg" da rota.
+        // c) O resultado total deve ser armazenado na variável `totalDistanceKm`.
+        
+        let totalDistanceMeters = 0;
+        
+        // **EXEMPLO TEÓRICO DA LÓGICA DA API:**
+        /*
+        const directionsService = new google.maps.DirectionsService();
+        try {
+            const response = await directionsService.route({
+                origin: origin,
+                destination: destination,
+                waypoints: waypoints,
+                travelMode: google.maps.TravelMode.DRIVING,
+                unitSystem: google.maps.UnitSystem.METRIC 
             });
+            
+            // Soma a distância de todas as pernas da viagem (legs)
+            response.routes[0].legs.forEach(leg => {
+                totalDistanceMeters += leg.distance.value; 
+            });
+            
+        } catch (error) {
+            console.error('Erro ao calcular rota:', error);
+            alert('Não foi possível calcular a rota. Verifique os links e sua Chave de API.');
+            kmTotalInput.value = '';
+            calcularFrete();
+            return;
         }
-    }
-    
-    function limparHistorico() {
-        if (confirm('Tem certeza que deseja limpar todo o histórico?')) {
-            localStorage.removeItem('freteHistorico');
-            carregarHistorico();
-        }
+        */
+        
+        // Simulação de 1250 km para demonstração, remova após integrar a API
+        let totalDistanceKm = 1250; 
+        
+        // Se a API for integrada, use:
+        // let totalDistanceKm = totalDistanceMeters / 1000; 
+
+        // 3. Atualiza o campo KM Total
+        kmTotalInput.value = totalDistanceKm.toFixed(0);
+        calcularKmMT(); // Recalcula KM MT
+        calcularFrete(); // Recalcula o Frete
     }
 
-    // Funções de Navegação entre abas
-    function showTab(tabId) {
-        const tabs = document.querySelectorAll('.tab');
-        const contents = document.querySelectorAll('.tab-content');
-        
-        tabs.forEach(tab => tab.classList.remove('active'));
-        contents.forEach(content => content.classList.remove('active'));
-        
-        document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
-        document.getElementById(`${tabId}-content`).classList.add('active');
-        
-        if (tabId === 'history') {
-            carregarHistorico();
-        }
-    }
+    // A função calcularKmMT e calcularFrete permanecem as mesmas, 
+    // mas agora dependem do campo kmTotal ser preenchido pela função acima.
     
-    // Chamada inicial para preencher os valores e carregar o histórico
+    // ... (restante das funções: ajustarVlrKmRodado, calcularKmMT, calcularFrete, etc.)
+    
+    // Mantenha as outras funções auxiliares (arredondarParaCima, formatarMoeda) e 
+    // as funções de histórico/navegação.
+    
+    // Altere o window.onload para garantir a limpeza inicial:
     window.onload = function() {
-        // Remove a inicialização automática de valores para começar limpo
-        // document.getElementById('volume').value = 15000;
-        // document.getElementById('kmTotal').value = 1400;
-        // document.getElementById('kmGo').value = 800;
-        // ajustarVlrKmRodado();
-        // calcularKmMT();
-        // calcularFrete();
-        
-        limparCampos(); // Chamada para garantir que inicie vazio
+        limparCampos(); 
         carregarHistorico();
     };
 </script>
-
-</body>
-</html>
