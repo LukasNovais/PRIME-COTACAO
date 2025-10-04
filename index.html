@@ -129,128 +129,149 @@
 </div>
 
 <script>
-    // Configuração dos veículos, seus preços por KM e seus volumes
-    const tabelaVeiculos = [
-        { capacidade: "10m", precoKm: 4.00, volume: 10000 },
-        { capacidade: "15m", precoKm: 4.60, volume: 15000 },
-        { capacidade: "20m", precoKm: 4.80, volume: 20000 },
-        { capacidade: "30m", precoKm: 7.50, volume: 30000 }
-    ];
+    // ** MELHORIA DE SEGURANÇA: ENVELOPA TUDO NO DOMContentLoaded **
+    // Isso garante que o script só execute depois que o HTML estiver totalmente carregado.
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // Configuração dos veículos, seus preços por KM e seus volumes
+        const tabelaVeiculos = [
+            { capacidade: "10m", precoKm: 4.00, volume: 10000 },
+            { capacidade: "15m", precoKm: 4.60, volume: 15000 },
+            { capacidade: "20m", precoKm: 4.80, volume: 20000 },
+            { capacidade: "30m", precoKm: 7.50, volume: 30000 }
+        ];
 
-    let directionsService;
+        let directionsService;
 
-    // NOVO CÓDIGO: Função de inicialização do Google Maps e Autocomplete
-    function initMap() {
-        // Inicializa o serviço que calcula rotas
+        // Função de inicialização do Google Maps e Autocomplete
+        // Esta função precisa ser visível globalmente, então a mantemos fora do bloco DOMContentLoaded,
+        // mas as variáveis que ela usa (como directionsService) devem ser tratadas.
+        // No entanto, para simplificar o seu código, vamos manter as variáveis de controle globalmente.
+
+        // Mantenha as funções do Google Maps fora do DOMContentLoaded para que o Maps as encontre.
+        // As funções de cálculo de frete podem ficar dentro para segurança.
+
+        
+        // 1. Defina as variáveis globais novamente para garantir que 'initMap' as use
+        // e 'iniciarCalculo' as encontre.
+        let origemInput;
+        let destinoInput;
+        
+        // Função que calcula Frete e Tarifa 
+        function calcularFreteComTarifa(kmIda, kmTotal) {
+            
+            let resultadosHTML = `<div class="info-km">Distância Total (Ida e Volta): **${kmTotal.toFixed(1).replace('.', ',')} Km**</div>`;
+            resultadosHTML += `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Veículo</th>
+                            <th>Frete Total</th>
+                            <th>Tarifa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            // Itera sobre cada veículo e calcula frete e tarifa
+            tabelaVeiculos.forEach(veiculo => {
+                const valorFrete = veiculo.precoKm * kmTotal;
+                
+                // CÁLCULO DA TARIFA: Tarifa = Frete Total / Volume
+                const valorTarifa = valorFrete / veiculo.volume;
+
+                // Formata o Frete para Real (R$)
+                const freteFormatado = valorFrete.toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                });
+
+                // Formata a Tarifa para Real (R$)
+                const tarifaFormatada = valorTarifa.toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                });
+
+                // Adiciona uma linha na tabela de resultados
+                resultadosHTML += `
+                    <tr>
+                        <td>${veiculo.capacidade}</td>
+                        <td class="valor-frete">${freteFormatado}</td>
+                        <td class="valor-tarifa">${tarifaFormatada}</td>
+                    </tr>
+                `;
+            });
+            
+            resultadosHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            // Mostra o resultado na tela
+            const resultadoDiv = document.getElementById('resultado');
+            resultadoDiv.innerHTML = resultadosHTML;
+        }
+
+
+        // Função principal chamada pelo botão
+        window.iniciarCalculo = function() {
+            const origem = origemInput.value;
+            const destino = destinoInput.value;
+            const resultadoDiv = document.getElementById('resultado');
+
+            if (!origem || !destino) {
+                resultadoDiv.innerHTML = '<p class="info-km" style="color: red;">Por favor, preencha os campos Origem e Destino.</p>';
+                return;
+            }
+            // Verifica se o DirectionsService foi inicializado
+            if (!directionsService) {
+                 resultadoDiv.innerHTML = '<p class="info-km" style="color: orange;">Aguardando o Google Maps carregar... Tente novamente em um instante.</p>';
+                 return;
+            }
+
+            resultadoDiv.innerHTML = '<p class="info-km">Calculando rota... Aguarde.</p>';
+
+            const request = {
+                origin: origem,
+                destination: destino,
+                travelMode: 'DRIVING' 
+            };
+
+            // Chama a API do Google Maps para calcular a rota
+            directionsService.route(request, (response, status) => {
+                if (status === 'OK') {
+                    // Pega a distância em METROS (solução para o TypeError que apareceu na imagem)
+                    // O erro de 'route' estava relacionado ao directionsService não estar inicializado.
+                    const distanciaMetros = response.routes[0].legs[0].distance.value;
+                    
+                    const distanciaKmIda = distanciaMetros / 1000;
+
+                    calcularFreteComTarifa(distanciaKmIda, kmTotal = distanciaKmIda * 2);
+                    
+                } else {
+                    resultadoDiv.innerHTML = `<p class="info-km" style="color: red;">Erro ao calcular rota: ${status}. Verifique se os endereços estão corretos ou se as APIs estão ativadas.</p>`;
+                }
+            });
+        }
+    });
+
+    // Esta função DEVE ser definida globalmente, pois o Google a chama diretamente.
+    let directionsService; // Mantenha a declaração aqui também.
+
+    window.initMap = function() {
         directionsService = new google.maps.DirectionsService();
 
-        // 1. Configura Autocomplete para Origem
-        const origemInput = document.getElementById('origem');
+        origemInput = document.getElementById('origem');
         new google.maps.places.Autocomplete(origemInput, {
-            // Sugere resultados no Brasil
             componentRestrictions: { country: 'br' } 
         });
 
-        // 2. Configura Autocomplete para Destino
-        const destinoInput = document.getElementById('destino');
+        destinoInput = document.getElementById('destino');
         new google.maps.places.Autocomplete(destinoInput, {
             componentRestrictions: { country: 'br' }
         });
         
         console.log("Serviços de Rota e Autocomplete inicializados.");
-    }
-
-    // Função principal chamada pelo botão (renomeada para maior clareza)
-    function iniciarCalculo() {
-        const origem = document.getElementById('origem').value;
-        const destino = document.getElementById('destino').value;
-        const resultadoDiv = document.getElementById('resultado');
-
-        if (!origem || !destino) {
-            resultadoDiv.innerHTML = '<p class="info-km" style="color: red;">Por favor, preencha os campos Origem e Destino.</p>';
-            return;
-        }
-
-        resultadoDiv.innerHTML = '<p class="info-km">Calculando rota... Aguarde.</p>';
-
-        // Objeto de requisição para a API de Rotas
-        const request = {
-            origin: origem,
-            destination: destino,
-            travelMode: 'DRIVING' 
-        };
-
-        // Chama a API do Google Maps para calcular a rota
-        directionsService.route(request, (response, status) => {
-            if (status === 'OK') {
-                // Pega a distância em METROS do primeiro trajeto
-                const distanciaMetros = response.routes[0].legs[0].distance.value;
-                
-                // Converte para Quilômetros (KM - SÓ IDA)
-                const distanciaKmIda = distanciaMetros / 1000;
-
-                // Chama a função de cálculo do seu frete
-                calcularFreteComTarifa(distanciaKmIda, kmTotal = distanciaKmIda * 2);
-                
-            } else {
-                resultadoDiv.innerHTML = `<p class="info-km" style="color: red;">Erro ao calcular rota: ${status}. Verifique se os endereços estão corretos.</p>`;
-            }
-        });
-    }
-
-    // Função que calcula Frete e Tarifa (mantida a lógica anterior)
-    function calcularFreteComTarifa(kmIda, kmTotal) {
-        
-        let resultadosHTML = `<div class="info-km">Distância Total (Ida e Volta): **${kmTotal.toFixed(1).replace('.', ',')} Km**</div>`;
-        resultadosHTML += `
-            <table>
-                <thead>
-                    <tr>
-                        <th>Veículo</th>
-                        <th>Frete Total</th>
-                        <th>Tarifa</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        // Itera sobre cada veículo e calcula frete e tarifa
-        tabelaVeiculos.forEach(veiculo => {
-            const valorFrete = veiculo.precoKm * kmTotal;
-            
-            // CÁLCULO DA TARIFA: Tarifa = Frete Total / Volume
-            const valorTarifa = valorFrete / veiculo.volume;
-
-            // Formata o Frete para Real (R$)
-            const freteFormatado = valorFrete.toLocaleString('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            });
-
-            // Formata a Tarifa para Real (R$)
-            const tarifaFormatada = valorTarifa.toLocaleString('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            });
-
-            // Adiciona uma linha na tabela de resultados
-            resultadosHTML += `
-                <tr>
-                    <td>${veiculo.capacidade}</td>
-                    <td class="valor-frete">${freteFormatado}</td>
-                    <td class="valor-tarifa">${tarifaFormatada}</td>
-                </tr>
-            `;
-        });
-        
-        resultadosHTML += `
-                </tbody>
-            </table>
-        `;
-
-        // Mostra o resultado na tela
-        const resultadoDiv = document.getElementById('resultado');
-        resultadoDiv.innerHTML = resultadosHTML;
     }
 </script>
 
